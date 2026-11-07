@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Dashboard On Time Delivery</title>
+<script>
+// =====================================================================
+//  SUPABASE_URL             : https://wskqcdwuxyyzlqgmhjdt.supabase.co
+//  SUPABASE_PUBLISHABLE_KEY : sb_publishable_Sv8w-sL1oesEdZjRJcJg-Q_SWeCFsJ1
+//  TARGET_OTD               : target OTD, 0.95 = 95%
+// =====================================================================
+window.OTD_CONFIG = {
+  SUPABASE_URL: "https://ISI-PROJECT-ANDA.supabase.co",
+  SUPABASE_PUBLISHABLE_KEY: "ISI_PUBLISHABLE_KEY",
+  TARGET_OTD: 0.95,
+  NAMA_PERUSAHAAN: "PT Federal Mardhika Citramandiri",
+};
+</script>
+<style>
+:root {
+  --bg: #f5f6f8; --panel: #ffffff; --fg: #1d2330; --muted: #667085; --line: #e3e6eb;
+  --accent: #1f4e8c; --accent-soft: #dbe6f5; --bad: #c8372d; --bad-soft: #f6d9d6; --ok: #217a4b;
+  --grid: #edf0f3; --ref: #8a94a6; --radius: 10px;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --serif: Georgia, "Times New Roman", serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #14171c; --panel: #1c2027; --fg: #e8eaee; --muted: #9aa3b2; --line: #2c323c;
+    --accent: #6d9be0; --accent-soft: #263752; --bad: #ef6a5e; --bad-soft: #4a2723; --ok: #5cc28b;
+    --grid: #262b33; --ref: #7d8696; }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--sans); font-size: 15px; line-height: 1.45; }
+button, input, select { font: inherit; color: inherit; }
+.hidden { display: none !important; }
+
+/* ---------- login */
+.login-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
+.login { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 32px; width: 100%; max-width: 380px; }
+.login h1 { font-family: var(--serif); font-weight: 400; font-size: 26px; margin: 0 0 4px; }
+.login p.sub { color: var(--muted); margin: 0 0 24px; font-size: 14px; }
+.field { display: block; margin-bottom: 14px; }
+.field span { display: block; font-size: 13px; color: var(--muted); margin-bottom: 4px; }
+.field input { width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 9px 16px; border-radius: 8px; border: 1px solid var(--accent); background: var(--accent); color: #fff; cursor: pointer; font-weight: 600; }
+.btn.block { width: 100%; }
+.btn.ghost { background: transparent; color: var(--fg); border-color: var(--line); font-weight: 500; }
+.btn:disabled { opacity: .6; cursor: wait; }
+.link { background: none; border: 0; color: var(--accent); cursor: pointer; padding: 0; font-size: 13px; }
+.msg { font-size: 13px; margin: 12px 0 0; }
+.msg.err { color: var(--bad); }
+.msg.ok { color: var(--ok); }
+
+/* ---------- app */
+.top { position: sticky; top: 0; z-index: 5; background: var(--panel); border-bottom: 1px solid var(--line); }
+.top-in { max-width: 1280px; margin: 0 auto; padding: 10px 24px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.brand { font-weight: 600; margin-right: auto; }
+.brand small { display: block; font-weight: 400; color: var(--muted); font-size: 12px; }
+.who { color: var(--muted); font-size: 13px; }
+select.sel { padding: 7px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); }
+main { max-width: 1280px; margin: 0 auto; padding: 24px; display: flex; flex-direction: column; gap: 20px; }
+.head h2 { font-family: var(--serif); font-weight: 400; font-size: 30px; margin: 0 0 6px; }
+.head p { margin: 0; color: var(--muted); max-width: 900px; }
+.head b { color: var(--fg); }
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr)); gap: 14px; }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 440px), 1fr)); gap: 14px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px 20px; min-width: 0; container-type: inline-size; }
+.card h3 { font-size: 16px; font-weight: 600; margin: 0 0 2px; }
+.note { color: var(--muted); font-size: 13px; margin: 0 0 12px; }
+.kpi-label { color: var(--muted); font-size: 13px; margin: 0; }
+.kpi-value { font-family: var(--serif); font-size: 32px; margin: 6px 0 4px; font-variant-numeric: tabular-nums; }
+.kpi-sub { color: var(--muted); font-size: 13px; margin: 0; font-variant-numeric: tabular-nums; }
+.up { color: var(--ok); } .down { color: var(--bad); }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 12px; color: var(--muted); margin: 0 0 6px; }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
+.legend i.line { width: 16px; height: 0; border-top: 2px dashed var(--ref); border-radius: 0; vertical-align: 3px; }
+.chart { position: relative; min-height: 260px; }
+.chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+.chart text { font-family: var(--sans); font-size: 12px; fill: var(--muted); }
+.chart text.val { fill: var(--fg); }
+.tip { position: absolute; pointer-events: none; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 6px 20px rgba(0,0,0,.12); padding: 6px 10px; font-size: 12px; white-space: nowrap; z-index: 3; font-variant-numeric: tabular-nums; }
+.tip .h { color: var(--muted); margin-bottom: 2px; }
+.tip .sw { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 6px; }
+.quarters { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 130px), 1fr)); gap: 10px; }
+.q { border: 1px solid var(--line); border-radius: 8px; padding: 12px; }
+.q .n { color: var(--muted); font-size: 12px; }
+.q .v { font-family: var(--serif); font-size: 26px; margin: 2px 0; font-variant-numeric: tabular-nums; }
+.q .s { color: var(--muted); font-size: 12px; }
+.tools { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; align-items: center; }
+.search { flex: 1 1 220px; min-width: 0; padding: 8px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); }
+.scroll { max-height: 460px; overflow: auto; border-top: 1px solid var(--line); }
+table { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+th { position: sticky; top: 0; background: var(--panel); text-align: left; font-weight: 600; border-bottom: 1px solid var(--line); padding: 0; z-index: 1; }
+th button { all: unset; display: block; cursor: pointer; padding: 8px 10px; color: var(--muted); }
+th[aria-sort] button { color: var(--fg); }
+th[aria-sort="ascending"] button::after { content: " ▲"; font-size: .7em; }
+th[aria-sort="descending"] button::after { content: " ▼"; font-size: .7em; }
+td { padding: 7px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.num { text-align: right; } th.num button { text-align: right; }
+.bar-cell { display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
+.bar { height: 8px; border-radius: 2px; background: var(--bad); flex: none; }
+td.bad { color: var(--bad); }
+td.date { white-space: nowrap; }
+.count { color: var(--muted); font-size: 12px; margin-left: auto; }
+@container (max-width: 620px) { .sec { display: none; } }
+details.card summary { cursor: pointer; font-weight: 600; }
+dl { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; margin: 12px 0 0; font-size: 13px; color: var(--muted); }
+dt { color: var(--fg); font-weight: 600; }
+dd { margin: 0; }
+.state { text-align: center; color: var(--muted); padding: 60px 20px; }
+.state.err { color: var(--bad); }
+.foot { color: var(--muted); font-size: 12px; text-align: center; padding: 8px 0 24px; }
+</style>
+</head>
+<body>
+
+<!-- ================= LOGIN ================= -->
+<div class="login-wrap hidden" id="vLogin">
+  <form class="login" id="fLogin" autocomplete="on">
+    <h1>On Time Delivery</h1>
+    <p class="sub" id="loginCompany"></p>
+    <label class="field"><span>Email</span><input type="email" id="inEmail" required autocomplete="username"></label>
+    <label class="field"><span>Password</span><input type="password" id="inPass" required autocomplete="current-password"></label>
+    <button class="btn block" type="submit" id="btnLogin">Masuk</button>
+    <p class="msg" id="loginMsg"></p>
+    <p style="margin:16px 0 0"><button type="button" class="link" id="btnForgot">Lupa password?</button></p>
+  </form>
+</div>
+
+<!-- ================= SET PASSWORD (undangan / reset) ================= -->
+<div class="login-wrap hidden" id="vSetPass">
+  <form class="login" id="fSetPass">
+    <h1>Buat password</h1>
+    <p class="sub">Buat password untuk masuk ke dashboard OTD. Minimal 8 karakter.</p>
+    <label class="field"><span>Password baru</span><input type="password" id="inNew1" minlength="8" required autocomplete="new-password"></label>
+    <label class="field"><span>Ulangi password</span><input type="password" id="inNew2" minlength="8" required autocomplete="new-password"></label>
+    <button class="btn block" type="submit" id="btnSetPass">Simpan password</button>
+    <p class="msg" id="setPassMsg"></p>
+  </form>
+</div>
+
+<!-- ================= APP ================= -->
+<div class="hidden" id="vApp">
+  <div class="top"><div class="top-in">
+    <div class="brand">Dashboard On Time Delivery<small id="topCompany"></small></div>
+    <select class="sel" id="selYear" aria-label="Tahun"></select>
+    <span class="who" id="who"></span>
+    <button class="btn ghost" id="btnLogout" type="button">Keluar</button>
+  </div></div>
+
+  <main id="main">
+    <div class="state" id="state">Memuat data…</div>
+
+    <div id="content" class="hidden" style="display:flex;flex-direction:column;gap:20px">
+      <section class="head">
+        <h2>On Time Delivery <span id="tYear"></span></h2>
+        <p id="takeaway"></p>
+      </section>
+
+      <section class="kpis">
+        <div class="card"><p class="kpi-label">OTD bulan terakhir · <span id="kLastName"></span></p><p class="kpi-value" id="kLast"></p><p class="kpi-sub" id="kDelta"></p></div>
+        <div class="card"><p class="kpi-label">OTD tahun berjalan</p><p class="kpi-value" id="kYtd"></p><p class="kpi-sub" id="kYtdSub"></p></div>
+        <div class="card"><p class="kpi-label">Berat terkirim</p><p class="kpi-value" id="kKirim"></p><p class="kpi-sub" id="kKirimSub"></p></div>
+        <div class="card"><p class="kpi-label">Berat terlambat</p><p class="kpi-value" id="kTelat"></p><p class="kpi-sub" id="kTelatSub"></p></div>
+      </section>
+
+      <section class="grid2">
+        <div class="card">
+          <h3>OTD per bulan</h3>
+          <p class="note">Berat tepat waktu dibagi total berat terkirim. Titik merah berarti di bawah target.</p>
+          <p class="legend"><span><i style="background:var(--accent)"></i>OTD</span><span><i style="background:var(--bad)"></i>Di bawah target</span><span><i class="line"></i><span id="lgTarget"></span></span></p>
+          <div class="chart" id="cOtd"></div>
+        </div>
+        <div class="card">
+          <h3>Berat terkirim per bulan</h3>
+          <p class="note">Dalam kg, dibagi menjadi tepat waktu dan terlambat.</p>
+          <p class="legend"><span><i style="background:var(--accent)"></i>Tepat waktu</span><span><i style="background:var(--bad)"></i>Terlambat</span></p>
+          <div class="chart" id="cBerat"></div>
+        </div>
+      </section>
+
+      <section class="grid2">
+        <div class="card">
+          <h3>Rata-rata OTD per kuartal</h3>
+          <p class="note">Rata-rata OTD bulan-bulan dalam kuartal yang sudah ada datanya.</p>
+          <div class="quarters" id="quarters"></div>
+        </div>
+        <div class="card">
+          <h3>Berapa lama terlambatnya</h3>
+          <p class="note">Jumlah baris pengiriman terlambat menurut selisih hari dari ShipDate.</p>
+          <div class="chart" id="cSebaran" style="min-height:190px"></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h3>OTD per pelanggan</h3>
+        <p class="note">Diurutkan dari berat terlambat terbesar. Klik judul kolom untuk mengurutkan.</p>
+        <div class="tools">
+          <input class="search" type="search" id="sPel" placeholder="Cari pelanggan…" aria-label="Cari pelanggan">
+          <button class="btn ghost" type="button" id="dlPel">Unduh CSV</button>
+          <span class="count" id="nPel"></span>
+        </div>
+        <div class="scroll"><table id="tPel">
+          <thead><tr>
+            <th data-k="pelanggan"><button type="button">Pelanggan</button></th>
+            <th class="num sec" data-k="terkirim_kg" data-n><button type="button">Terkirim (kg)</button></th>
+            <th class="num" data-k="terlambat_kg" data-n aria-sort="descending"><button type="button">Terlambat (kg)</button></th>
+            <th class="num" data-k="otd" data-n><button type="button">OTD</button></th>
+            <th class="num sec" data-k="baris_terlambat" data-n><button type="button">Baris terlambat</button></th>
+          </tr></thead><tbody></tbody></table></div>
+      </section>
+
+      <section class="card">
+        <h3>Daftar pengiriman terlambat</h3>
+        <p class="note">Setiap baris pengiriman yang Tgl Faktur-nya melewati ShipDate. Kolom koreksi menandai baris yang target atau tanggal kirimnya diubah lewat file koreksi.</p>
+        <div class="tools">
+          <select class="sel" id="selBulan" aria-label="Bulan"></select>
+          <input class="search" type="search" id="sTel" placeholder="Cari pelanggan, barang, atau surat jalan…" aria-label="Cari pengiriman terlambat">
+          <button class="btn ghost" type="button" id="dlTel">Unduh CSV</button>
+          <span class="count" id="nTel"></span>
+        </div>
+        <div class="scroll"><table id="tTel">
+          <thead><tr>
+            <th data-k="bulan"><button type="button">Bulan</button></th>
+            <th data-k="surat_jalan"><button type="button">Surat jalan</button></th>
+            <th data-k="pelanggan"><button type="button">Pelanggan</button></th>
+            <th class="sec" data-k="nama_barang"><button type="button">Barang</button></th>
+            <th class="sec" data-k="target"><button type="button">Target</button></th>
+            <th class="sec" data-k="tgl_kirim"><button type="button">Tgl kirim</button></th>
+            <th class="num" data-k="telat_hari" data-n aria-sort="descending"><button type="button">Telat (hari)</button></th>
+            <th class="num" data-k="berat_kg" data-n><button type="button">Berat (kg)</button></th>
+            <th class="sec" data-k="koreksi"><button type="button">Koreksi</button></th>
+          </tr></thead><tbody></tbody></table></div>
+      </section>
+
+      <details class="card">
+        <summary>Cara hitung dan sumber data</summary>
+        <dl>
+          <dt>Sumber</dt><dd>Export Accurate, laporan "Histori Pesanan Penjualan NEW" dengan filter ShipDate per bulan, dihitung oleh sistem OTD (JALANKAN_OTD.bat).</dd>
+          <dt>Berat kirim</dt><dd>Berat barang per satuan × Kts. Faktur, hanya baris "Pengiriman Pesanan".</dd>
+          <dt>Terlambat</dt><dd>Tgl Faktur (tanggal kirim) lebih besar dari ShipDate (target).</dd>
+          <dt>OTD</dt><dd>Berat tepat waktu ÷ total berat terkirim.</dd>
+          <dt>Kuartal</dt><dd>Rata-rata OTD bulan dalam kuartal yang sudah ada datanya.</dd>
+          <dt>Target</dt><dd id="ddTarget"></dd>
+          <dt>Koreksi</dt><dd>Target atau tanggal kirim yang direvisi dicatat di koreksi_otd.xlsx dan sudah diterapkan di semua angka.</dd>
+          <dt>Data terakhir</dt><dd id="ddUpdated"></dd>
+        </dl>
+      </details>
+    </div>
+  </main>
+  <div class="foot" id="foot"></div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  const CFG = window.OTD_CONFIG || {};
+  const URL_ = String(CFG.SUPABASE_URL || "").trim().replace(/\/+$/, "").replace(/\/rest(\/v1)?$/i, "");
+  const KEY = CFG.SUPABASE_PUBLISHABLE_KEY || "";
+  const TARGET = Number(CFG.TARGET_OTD) || 0.95;
+  const SKEY = "otd_session";
+  const $ = (id) => document.getElementById(id);
+  const show = (id) => ["vLogin", "vSetPass", "vApp"].forEach((v) => $(v).classList.toggle("hidden", v !== id));
+
+  // ---------- format Indonesia
+  const nf0 = new Intl.NumberFormat("id-ID", { maximumFractionDigits: 0 });
+  const nf1 = new Intl.NumberFormat("id-ID", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  const nf2 = new Intl.NumberFormat("id-ID", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const pct = (v) => nf1.format(v * 100) + "%";
+  const pct0 = (v) => nf0.format(v * 100) + "%";
+  const kg = (v) => nf0.format(v);
+  const BLN = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
+  const bln = (s) => BLN[+String(s).slice(5, 7) - 1];
+  const tgl = (s) => { const p = String(s || "").split("-"); return p.length === 3 ? `${p[2]} ${BLN[+p[1] - 1]} ${p[0].slice(2)}` : (s || ""); };
+  const signed = (v) => (v > 0 ? "+" : v < 0 ? "−" : "±") + nf2.format(Math.abs(v));
+
+  $("loginCompany").textContent = CFG.NAMA_PERUSAHAAN || "";
+  $("topCompany").textContent = CFG.NAMA_PERUSAHAAN || "";
+
+  // ---------- sesi & Supabase Auth (REST)
+  let session = null;
+  try { session = JSON.parse(localStorage.getItem(SKEY) || "null"); } catch (e) { session = null; }
+  const saveSession = (s) => { session = s; try { s ? localStorage.setItem(SKEY, JSON.stringify(s)) : localStorage.removeItem(SKEY); } catch (e) {} };
+  const withExpiry = (s) => Object.assign({}, s, { expires_at: s.expires_at || Math.floor(Date.now() / 1000) + (s.expires_in || 3600) });
+
+  async function auth(path, body, token) {
+    const h = { apikey: KEY, "Content-Type": "application/json" };
+    if (token) h.Authorization = "Bearer " + token;
+    const r = await fetch(URL_ + "/auth/v1/" + path, { method: path === "user" ? "PUT" : "POST", headers: h, body: JSON.stringify(body || {}) });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(j.error_description || j.msg || j.message || ("Error " + r.status));
+    return j;
+  }
+  async function freshToken() {
+    if (!session) throw new Error("login");
+    if (session.expires_at - 60 > Date.now() / 1000) return session.access_token;
+    const s = await auth("token?grant_type=refresh_token", { refresh_token: session.refresh_token });
+    saveSession(withExpiry(s));
+    return session.access_token;
+  }
+  async function getAll(table, query) {
+    const token = await freshToken();
+    const rows = [];
+    for (let off = 0; ; off += 1000) {
+      const r = await fetch(`${URL_}/rest/v1/${table}?${query}&limit=1000&offset=${off}`, { headers: { apikey: KEY, Authorization: "Bearer " + token } });
+      if (r.status === 401) throw new Error("login");
+      if (!r.ok) throw new Error(`Gagal membaca ${table} (${r.status})`);
+      const part = await r.json();
+      rows.push(...part);
+      if (part.length < 1000) return rows;
+    }
+  }
+
+  // ---------- link dari email undangan / reset password
+  function handleHash() {
+    if (!location.hash.includes("access_token")) {
+      if (location.hash.includes("error_description")) {
+        const p = new URLSearchParams(location.hash.slice(1));
+        history.replaceState(null, "", location.pathname + location.search);
+        return { error: p.get("error_description") };
+      }
+      return null;
+    }
+    const p = new URLSearchParams(location.hash.slice(1));
+    history.replaceState(null, "", location.pathname + location.search);
+    saveSession(withExpiry({ access_token: p.get("access_token"), refresh_token: p.get("refresh_token"), expires_in: +p.get("expires_in") || 3600, user: null }));
+    return { type: p.get("type") };
+  }
+
+  // ---------- login form
+  $("fLogin").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const b = $("btnLogin"), m = $("loginMsg");
+    b.disabled = true; m.className = "msg"; m.textContent = "";
+    try {
+      const s = await auth("token?grant_type=password", { email: $("inEmail").value.trim(), password: $("inPass").value });
+      saveSession(withExpiry(s));
+      $("inPass").value = "";
+      startApp();
+    } catch (err) {
+      m.className = "msg err";
+      m.textContent = /invalid/i.test(err.message) ? "Email atau password salah." : (err instanceof TypeError ? "Tidak bisa terhubung ke server. Cek internet." : err.message);
+    } finally { b.disabled = false; }
+  });
+  $("btnForgot").addEventListener("click", async () => {
+    const m = $("loginMsg"), email = $("inEmail").value.trim();
+    if (!email) { m.className = "msg err"; m.textContent = "Isi email dulu, lalu klik Lupa password."; return; }
+    try {
+      await auth("recover", { email });
+      m.className = "msg ok"; m.textContent = "Jika email terdaftar, link untuk membuat password baru sudah dikirim.";
+    } catch (err) { m.className = "msg err"; m.textContent = err.message; }
+  });
+  $("fSetPass").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const m = $("setPassMsg"), p1 = $("inNew1").value, p2 = $("inNew2").value;
+    if (p1 !== p2) { m.className = "msg err"; m.textContent = "Kedua password tidak sama."; return; }
+    $("btnSetPass").disabled = true;
+    try {
+      await auth("user", { password: p1 }, await freshToken());
+      startApp();
+    } catch (err) { m.className = "msg err"; m.textContent = err.message; }
+    finally { $("btnSetPass").disabled = false; }
+  });
+  $("btnLogout").addEventListener("click", async () => {
+    try { if (session) await auth("logout", {}, session.access_token); } catch (e) {}
+    saveSession(null); DATA = null; show("vLogin");
+  });
+
+  // ---------- data
+  let DATA = null, YEAR = null;
+  const st = { pel: { k: "terlambat_kg", d: -1, q: "" }, tel: { k: "telat_hari", d: -1, q: "", bulan: "" } };
+
+  async function startApp() {
+    show("vApp");
+    $("state").className = "state"; $("state").textContent = "Memuat data…";
+    $("state").classList.remove("hidden"); $("content").classList.add("hidden");
+    try {
+      if (!session.user) { const u = await fetch(URL_ + "/auth/v1/user", { headers: { apikey: KEY, Authorization: "Bearer " + await freshToken() } }); if (u.ok) { session.user = await u.json(); saveSession(session); } }
+      $("who").textContent = (session.user && session.user.email) || "";
+      const [bulanan, pelanggan, terlambat] = await Promise.all([
+        getAll("otd_bulanan", "select=*&order=bulan.asc"),
+        getAll("otd_pelanggan", "select=*&order=terlambat_kg.desc"),
+        getAll("otd_terlambat", "select=*&order=tahun.asc,id.asc"),
+      ]);
+      const num = (r, ks) => { ks.forEach((k) => { if (r[k] !== null && r[k] !== undefined) r[k] = Number(r[k]); }); return r; };
+      DATA = {
+        bulanan: bulanan.map((r) => num(r, ["tahun", "terkirim_kg", "tepat_kg", "terlambat_kg", "otd", "baris_kirim", "baris_terlambat"])),
+        pelanggan: pelanggan.map((r) => num(r, ["tahun", "terkirim_kg", "tepat_kg", "terlambat_kg", "otd", "baris_kirim", "baris_terlambat"])),
+        terlambat: terlambat.map((r) => num(r, ["tahun", "id", "telat_hari", "berat_kg"])),
+      };
+      if (!DATA.bulanan.length) { $("state").textContent = "Belum ada data. Jalankan JALANKAN_OTD.bat untuk mengirim data pertama."; return; }
+      const years = [...new Set(DATA.bulanan.map((r) => r.tahun))].sort();
+      $("selYear").replaceChildren(...years.map((y) => new Option(y, y)));
+      YEAR = YEAR && years.includes(YEAR) ? YEAR : years[years.length - 1];
+      $("selYear").value = YEAR;
+      $("selYear").classList.toggle("hidden", years.length < 2);
+      $("state").classList.add("hidden"); $("content").classList.remove("hidden");
+      render();
+    } catch (err) {
+      if (err.message === "login" || /refresh/i.test(err.message)) { saveSession(null); show("vLogin"); return; }
+      $("state").className = "state err";
+      $("state").textContent = err instanceof TypeError
+        ? "Tidak bisa terhubung ke database. Cek internet. Jika memakai paket gratis Supabase, project mungkin sedang di-pause dan perlu diaktifkan lagi."
+        : err.message;
+    }
+  }
+  $("selYear").addEventListener("change", () => { YEAR = +$("selYear").value; st.tel.bulan = ""; render(); });
+
+  // ---------- render
+  function render() {
+    const B = DATA.bulanan.filter((r) => r.tahun === YEAR).sort((a, b) => (a.bulan < b.bulan ? -1 : 1));
+    const P = DATA.pelanggan.filter((r) => r.tahun === YEAR);
+    const T = DATA.terlambat.filter((r) => r.tahun === YEAR);
+    const sum = (a, k) => a.reduce((s, r) => s + r[k], 0);
+    const last = B[B.length - 1], prev = B[B.length - 2];
+    const kirim = sum(B, "terkirim_kg"), tepat = sum(B, "tepat_kg"), telat = sum(B, "terlambat_kg");
+    const delta = prev ? Math.round((last.otd - prev.otd) * 10000) / 100 : 0;
+
+    $("tYear").textContent = YEAR;
+    const tk = $("takeaway"); tk.replaceChildren();
+    const add = (t, bold) => { const e = document.createElement(bold ? "b" : "span"); e.textContent = t; tk.append(e); };
+    add("OTD "); add(last.nama_bulan, 1); add(" sebesar "); add(pct(last.otd), 1);
+    if (prev) { add(delta > 0 ? ", naik " : delta < 0 ? ", turun " : ", sama dengan "); if (delta) { add(nf2.format(Math.abs(delta)) + " poin", 1); add(" dari "); } add(prev.nama_bulan); }
+    add(last.otd >= TARGET ? ", mencapai target " : ", di bawah target "); add(pct0(TARGET), 1);
+    add(". Sepanjang tahun, "); add(pct(telat / kirim), 1); add(" berat kiriman terlambat.");
+
+    $("kLastName").textContent = last.nama_bulan;
+    $("kLast").textContent = pct(last.otd);
+    $("kLast").className = "kpi-value" + (last.otd < TARGET ? " down" : "");
+    const kd = $("kDelta"); kd.replaceChildren();
+    if (prev) { const s = document.createElement("span"); s.textContent = signed(delta) + " poin"; s.className = delta > 0 ? "up" : delta < 0 ? "down" : ""; kd.append(s, document.createTextNode(" dari " + prev.nama_bulan)); }
+    $("kYtd").textContent = pct(tepat / kirim);
+    $("kYtdSub").textContent = `${B[0].nama_bulan} – ${last.nama_bulan}, berdasarkan berat`;
+    $("kKirim").textContent = kg(kirim) + " kg";
+    $("kKirimSub").textContent = kg(sum(B, "baris_kirim")) + " baris pengiriman";
+    $("kTelat").textContent = kg(telat) + " kg";
+    $("kTelatSub").textContent = kg(sum(B, "baris_terlambat")) + " baris pengiriman terlambat";
+    $("lgTarget").textContent = "Target " + pct0(TARGET);
+    $("ddTarget").textContent = pct0(TARGET) + " (bisa diubah di bagian PENGATURAN pada index.html).";
+    const upd = DATA.bulanan.map((r) => r.diperbarui).filter(Boolean).sort().pop();
+    $("ddUpdated").textContent = upd ? new Date(upd).toLocaleString("id-ID", { dateStyle: "long", timeStyle: "short" }) : "-";
+    $("foot").textContent = (CFG.NAMA_PERUSAHAAN || "") + (upd ? " · data diperbarui " + new Date(upd).toLocaleDateString("id-ID", { dateStyle: "long" }) : "");
+
+    drawOtd(B); drawBerat(B); drawQuarters(B); drawSebaran(T);
+    const sb = $("selBulan");
+    sb.replaceChildren(new Option("Semua bulan", ""), ...B.map((r) => new Option(r.nama_bulan, r.bulan)));
+    sb.value = st.tel.bulan;
+    CUR = { P, T };
+    drawPel(); drawTel();
+  }
+  let CUR = { P: [], T: [] };
+
+  // ---------- SVG helpers
+  const NS = "http://www.w3.org/2000/svg";
+  const el = (tag, attrs, parent) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.append(e); return e; };
+  const txt = (parent, x, y, s, attrs) => { const t = el("text", Object.assign({ x, y }, attrs || {}), parent); t.textContent = s; return t; };
+  const measure = (svg, strs, cls) => { let w = 0; strs.forEach((s) => { const t = txt(svg, 0, 0, s, cls ? { class: cls } : {}); w = Math.max(w, t.getComputedTextLength()); t.remove(); }); return w; };
+  const niceTicks = (lo, hi, n) => {
+    const step0 = (hi - lo) / n, mag = Math.pow(10, Math.floor(Math.log10(step0))), r = step0 / mag;
+    const step = (r >= 5 ? 10 : r >= 2 ? 5 : r >= 1 ? 2 : 1) * mag;
+    const out = []; for (let v = Math.ceil(lo / step) * step; v <= hi + step / 1e6; v += step) out.push(+v.toFixed(10)); return out;
+  };
+  function makeTip(box) {
+    const t = document.createElement("div"); t.className = "tip hidden"; box.append(t);
+    return {
+      show(lines, px, py) {
+        t.replaceChildren();
+        lines.forEach((ln, i) => { const d = document.createElement("div"); if (i === 0) d.className = "h";
+          if (ln.c) { const s = document.createElement("span"); s.className = "sw"; s.style.background = ln.c; d.append(s); }
+          d.append(document.createTextNode(ln.t)); t.append(d); });
+        t.classList.remove("hidden");
+        const W = box.clientWidth; let left = px + 12; if (left + t.offsetWidth > W) left = Math.max(0, px - t.offsetWidth - 12);
+        t.style.left = left + "px"; t.style.top = Math.max(0, py - t.offsetHeight - 8) + "px";
+      },
+      hide() { t.classList.add("hidden"); },
+    };
+  }
+  const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+
+  function band(n, x0, x1, pad) { const step = (x1 - x0) / n, bw = step * (1 - pad); return { step, bw, x: (i) => x0 + i * step + (step - bw) / 2 }; }
+
+  function drawOtd(B) {
+    const box = $("cOtd"); box.replaceChildren();
+    const W = Math.max(300, box.clientWidth), H = 260, mt = 22, mb = 26;
+    const svg = el("svg", { viewBox: `0 0 ${W} ${H}` }, box);
+    const lo = Math.floor(Math.min(TARGET - 0.05, Math.min(...B.map((r) => r.otd)) - 0.02) * 100) / 100;
+    const y = (v) => H - mb - (v - lo) / (1 - lo) * (H - mt - mb);
+    const ticks = niceTicks(lo, 1, 5);
+    const ml = measure(svg, ticks.map(pct0)) + 10, tl = "Target " + pct0(TARGET), mr = measure(svg, [tl]) + 10;
+    const b = band(B.length, ml, W - mr, 0.2), cx = (i) => b.x(i) + b.bw / 2;
+    ticks.forEach((t) => { el("line", { x1: ml, x2: W - mr, y1: y(t), y2: y(t), stroke: css("--grid") }, svg); txt(svg, ml - 8, y(t), pct0(t), { "text-anchor": "end", dy: "0.32em" }); });
+    const every = b.bw < 26 ? 2 : 1;
+    B.forEach((r, i) => { if (i % every === 0) txt(svg, cx(i), H - 6, bln(r.bulan), { "text-anchor": "middle" }); });
+    el("line", { x1: ml, x2: W - mr, y1: y(TARGET), y2: y(TARGET), stroke: css("--ref"), "stroke-width": 1.5, "stroke-dasharray": "5 4" }, svg);
+    txt(svg, W - mr + 6, y(TARGET), tl, { dy: "0.32em" });
+    el("path", { d: B.map((r, i) => (i ? "L" : "M") + cx(i) + "," + y(r.otd)).join(""), fill: "none", stroke: css("--accent"), "stroke-width": 2, "stroke-linejoin": "round", "stroke-linecap": "round" }, svg);
+    const dots = B.map((r, i) => el("circle", { cx: cx(i), cy: y(r.otd), r: 4, fill: r.otd < TARGET ? css("--bad") : css("--accent"), stroke: css("--panel"), "stroke-width": 1.5 }, svg));
+    if (b.bw >= 38) B.forEach((r, i) => txt(svg, cx(i), y(r.otd) - 10, pct(r.otd), { "text-anchor": "middle", class: "val" }));
+    const tip = makeTip(box);
+    B.forEach((r, i) => {
+      const hit = el("rect", { x: ml + i * b.step, y: mt, width: b.step, height: H - mt - mb, fill: "transparent" }, svg);
+      hit.addEventListener("mouseenter", () => { dots.forEach((d, j) => d.setAttribute("r", j === i ? 6 : 4)); const s = box.clientWidth / W;
+        tip.show([{ t: r.nama_bulan }, { t: "OTD " + pct(r.otd) }, { t: r.otd >= TARGET ? "Mencapai target" : "Di bawah target" }], cx(i) * s, y(r.otd) * s); });
+      hit.addEventListener("mouseleave", () => { dots.forEach((d) => d.setAttribute("r", 4)); tip.hide(); });
+    });
+  }
+
+  function drawBerat(B) {
+    const box = $("cBerat"); box.replaceChildren();
+    const W = Math.max(300, box.clientWidth), H = 260, mt = 12, mb = 26, mr = 8;
+    const svg = el("svg", { viewBox: `0 0 ${W} ${H}` }, box);
+    const max = Math.max(...B.map((r) => r.terkirim_kg)) || 1, ticks = niceTicks(0, max, 5), top = Math.max(ticks[ticks.length - 1], max);
+    const y = (v) => H - mb - v / top * (H - mt - mb), lab = (v) => (v ? nf0.format(v / 1000) + " rb" : "0");
+    const ml = measure(svg, ticks.map(lab)) + 10;
+    const b = band(B.length, ml, W - mr, 0.3), bw = Math.min(32, b.bw), bx = (i) => b.x(i) + (b.bw - bw) / 2;
+    ticks.forEach((t) => { el("line", { x1: ml, x2: W - mr, y1: y(t), y2: y(t), stroke: css("--grid") }, svg); txt(svg, ml - 8, y(t), lab(t), { "text-anchor": "end", dy: "0.32em" }); });
+    const every = b.bw < 22 ? 2 : 1;
+    const bars = [];
+    B.forEach((r, i) => {
+      if (i % every === 0) txt(svg, b.x(i) + b.bw / 2, H - 6, bln(r.bulan), { "text-anchor": "middle" });
+      const a = el("rect", { x: bx(i), width: bw, y: y(r.tepat_kg), height: y(0) - y(r.tepat_kg), fill: css("--accent") }, svg);
+      const c = el("rect", { x: bx(i), width: bw, y: y(r.terkirim_kg), height: Math.max(0, y(r.tepat_kg) - y(r.terkirim_kg)), fill: css("--bad"), rx: 2 }, svg);
+      bars.push([a, c]);
+    });
+    el("line", { x1: ml, x2: W - mr, y1: y(0), y2: y(0), stroke: css("--ref") }, svg);
+    const tip = makeTip(box);
+    B.forEach((r, i) => {
+      const hit = el("rect", { x: ml + i * b.step, y: mt, width: b.step, height: H - mt - mb, fill: "transparent" }, svg);
+      hit.addEventListener("mouseenter", () => { bars.forEach((p, j) => p.forEach((e) => e.setAttribute("opacity", j === i ? 1 : 0.45))); const s = box.clientWidth / W;
+        tip.show([{ t: r.nama_bulan }, { t: "Tepat waktu " + kg(r.tepat_kg) + " kg", c: css("--accent") }, { t: "Terlambat " + kg(r.terlambat_kg) + " kg", c: css("--bad") }, { t: "Total " + kg(r.terkirim_kg) + " kg" }], (b.x(i) + b.bw / 2) * s, y(r.terkirim_kg) * s); });
+      hit.addEventListener("mouseleave", () => { bars.forEach((p) => p.forEach((e) => e.setAttribute("opacity", 1))); tip.hide(); });
+    });
+  }
+
+  function drawQuarters(B) {
+    const box = $("quarters"); box.replaceChildren();
+    ["Q1", "Q2", "Q3", "Q4"].forEach((q) => {
+      const rows = B.filter((r) => r.kuartal === q);
+      const d = document.createElement("div"); d.className = "q";
+      const n = document.createElement("div"); n.className = "n"; n.textContent = q;
+      const v = document.createElement("div"); v.className = "v";
+      const s = document.createElement("div"); s.className = "s";
+      if (rows.length) {
+        const avg = rows.reduce((a, r) => a + r.otd, 0) / rows.length;
+        v.textContent = pct(avg); if (avg < TARGET) v.classList.add("down");
+        s.textContent = rows.length + " dari 3 bulan · " + kg(rows.reduce((a, r) => a + r.terkirim_kg, 0)) + " kg";
+      } else { v.textContent = "–"; s.textContent = "Belum ada data"; }
+      d.append(n, v, s); box.append(d);
+    });
+  }
+
+  function drawSebaran(T) {
+    const box = $("cSebaran"); box.replaceChildren();
+    const groups = [["1–2 hari", 1, 2], ["3–5 hari", 3, 5], ["6–10 hari", 6, 10], ["11–20 hari", 11, 20], ["Lebih dari 20 hari", 21, Infinity]]
+      .map(([n, a, b]) => { const r = T.filter((t) => t.telat_hari >= a && t.telat_hari <= b); return { n, c: r.length, w: r.reduce((s, t) => s + t.berat_kg, 0) }; });
+    const W = Math.max(300, box.clientWidth), rh = 34, H = groups.length * rh + 4;
+    const svg = el("svg", { viewBox: `0 0 ${W} ${H}` }, box);
+    const lab = (g) => kg(g.c) + " baris · " + kg(g.w) + " kg";
+    const ml = measure(svg, groups.map((g) => g.n)) + 12, mr = measure(svg, groups.map(lab), "val") + 10;
+    const max = Math.max(1, ...groups.map((g) => g.c));
+    groups.forEach((g, i) => {
+      const y0 = 4 + i * rh, bh = rh * 0.62, yc = y0 + bh / 2;
+      txt(svg, ml - 8, yc, g.n, { "text-anchor": "end", dy: "0.32em" });
+      const w = (W - mr - ml) * g.c / max;
+      el("rect", { x: ml, y: y0, width: Math.max(0, w), height: bh, rx: 2, fill: css("--bad") }, svg);
+      txt(svg, ml + w + 6, yc, lab(g), { dy: "0.32em", class: "val" });
+    });
+  }
+
+  // ---------- tabel
+  const td = (t, cls) => { const c = document.createElement("td"); if (cls) c.className = cls; c.textContent = t == null ? "" : t; return c; };
+  const sorter = (k, d, n) => (a, b) => { const x = n ? Number(a[k]) : String(a[k] || ""), y = n ? Number(b[k]) : String(b[k] || ""); return (x < y ? -1 : x > y ? 1 : 0) * d; };
+  const isNum = (tbl, k) => !!tbl.querySelector(`th[data-k="${k}"][data-n]`);
+  function pelRows() { const q = st.pel.q.toLowerCase(); return CUR.P.filter((r) => !q || String(r.pelanggan).toLowerCase().includes(q)).sort(sorter(st.pel.k, st.pel.d, isNum($("tPel"), st.pel.k))); }
+  function telRows() {
+    const q = st.tel.q.toLowerCase();
+    return CUR.T.filter((r) => !st.tel.bulan || r.bulan === st.tel.bulan)
+      .filter((r) => !q || [r.pelanggan, r.nama_barang, r.no_barang, r.surat_jalan, r.no_pesanan].some((v) => String(v || "").toLowerCase().includes(q)))
+      .sort(sorter(st.tel.k, st.tel.d, isNum($("tTel"), st.tel.k)));
+  }
+  function drawPel() {
+    const rows = pelRows(), max = Math.max(1, ...CUR.P.map((r) => r.terlambat_kg));
+    $("tPel").tBodies[0].replaceChildren(...rows.map((r) => {
+      const tr = document.createElement("tr");
+      const bc = document.createElement("td"); bc.className = "num";
+      const w = document.createElement("div"); w.className = "bar-cell";
+      const bar = document.createElement("span"); bar.className = "bar"; bar.style.width = Math.max(1, r.terlambat_kg / max * 80) + "px";
+      const v = document.createElement("span"); v.textContent = kg(r.terlambat_kg); w.append(bar, v); bc.append(w);
+      tr.append(td(r.pelanggan), td(kg(r.terkirim_kg), "num sec"), bc, td(r.otd == null ? "–" : pct(r.otd), "num" + (r.otd < TARGET ? " bad" : "")), td(kg(r.baris_terlambat), "num sec"));
+      return tr;
+    }));
+    $("nPel").textContent = rows.length + " pelanggan";
+  }
+  function drawTel() {
+    const rows = telRows();
+    $("tTel").tBodies[0].replaceChildren(...rows.map((r) => {
+      const tr = document.createElement("tr");
+      tr.append(td(r.nama_bulan), td(r.surat_jalan), td(r.pelanggan), td(r.nama_barang, "sec"), td(tgl(r.target), "sec date"), td(tgl(r.tgl_kirim), "sec date"),
+        td(kg(r.telat_hari), "num"), td(nf1.format(r.berat_kg), "num"), td(r.koreksi, "sec"));
+      return tr;
+    }));
+    $("nTel").textContent = rows.length + " baris · " + kg(rows.reduce((s, r) => s + r.berat_kg, 0)) + " kg";
+  }
+  function wireSort(tableId, state, redraw) {
+    const t = $(tableId);
+    t.querySelectorAll("th[data-k] button").forEach((btn) => btn.addEventListener("click", () => {
+      const th = btn.parentElement, k = th.dataset.k;
+      state.d = state.k === k ? -state.d : (th.hasAttribute("data-n") ? -1 : 1); state.k = k;
+      t.querySelectorAll("th[data-k]").forEach((h) => h === th ? h.setAttribute("aria-sort", state.d > 0 ? "ascending" : "descending") : h.removeAttribute("aria-sort"));
+      redraw();
+    }));
+  }
+  wireSort("tPel", st.pel, drawPel); wireSort("tTel", st.tel, drawTel);
+  $("sPel").addEventListener("input", (e) => { st.pel.q = e.target.value; drawPel(); });
+  $("sTel").addEventListener("input", (e) => { st.tel.q = e.target.value; drawTel(); });
+  $("selBulan").addEventListener("change", (e) => { st.tel.bulan = e.target.value; drawTel(); });
+
+  function downloadCsv(name, cols, rows) {
+    const esc = (v) => { const s = v == null ? "" : String(v); return /[";\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+    const fmt = (v) => (typeof v === "number" ? String(v).replace(".", ",") : v);
+    const lines = [cols.map((c) => c[1]).join(";")].concat(rows.map((r) => cols.map((c) => esc(fmt(r[c[0]]))).join(";")));
+    const blob = new Blob(["﻿" + lines.join("\r\n")], { type: "text/csv;charset=utf-8" });
+    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name; document.body.append(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  }
+  $("dlPel").addEventListener("click", () => downloadCsv(`OTD_pelanggan_${YEAR}.csv`,
+    [["pelanggan", "Pelanggan"], ["terkirim_kg", "Terkirim (kg)"], ["tepat_kg", "Tepat waktu (kg)"], ["terlambat_kg", "Terlambat (kg)"], ["otd", "OTD"], ["baris_kirim", "Baris kirim"], ["baris_terlambat", "Baris terlambat"]], pelRows()));
+  $("dlTel").addEventListener("click", () => downloadCsv(`OTD_terlambat_${YEAR}${st.tel.bulan ? "_" + st.tel.bulan : ""}.csv`,
+    [["nama_bulan", "Bulan"], ["no_pesanan", "No. Pesanan"], ["surat_jalan", "Surat jalan"], ["pelanggan", "Pelanggan"], ["no_barang", "No. Barang"], ["nama_barang", "Nama barang"], ["target", "Target"], ["tgl_kirim", "Tgl kirim"], ["telat_hari", "Telat (hari)"], ["berat_kg", "Berat (kg)"], ["koreksi", "Koreksi"]], telRows()));
+
+  let rz; window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => { if (DATA && YEAR) render(); }, 150); });
+
+  // ---------- mulai
+  if (!/^https?:\/\//.test(URL_) || URL_.includes("ISI-PROJECT") || !KEY || KEY.startsWith("ISI_")) {
+    show("vLogin");
+    $("fLogin").querySelectorAll("input,button").forEach((e) => (e.disabled = true));
+    $("loginMsg").className = "msg err";
+    $("loginMsg").textContent = "Dashboard belum disambungkan. Isi SUPABASE_URL dan SUPABASE_PUBLISHABLE_KEY di bagian PENGATURAN paling atas file index.html.";
+    return;
+  }
+  const h = handleHash();
+  if (h && h.error) { show("vLogin"); $("loginMsg").className = "msg err"; $("loginMsg").textContent = "Link sudah tidak berlaku: " + h.error + ". Minta link baru lewat Lupa password."; }
+  else if (h && ["invite", "recovery"].includes(h.type)) show("vSetPass");
+  else if (h) startApp();
+  else if (session) startApp();
+  else show("vLogin");
+})();
+</script>
+</body>
+</html>
